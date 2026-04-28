@@ -178,11 +178,10 @@ export default function RecipePage({
           <div className="flex items-center justify-between mb-3">
             <h2 className="font-bold text-gray-700">🥕 材料</h2>
             <label className="text-sm bg-purple-50 text-purple-600 px-3 py-1.5 rounded-lg hover:bg-purple-100 transition-colors cursor-pointer">
-              {analyzingIngredients ? "リョボットが解析中..." : "📷 材料を撮影してリョボットに任せる"}
+              {analyzingIngredients ? "リョボットが解析中..." : "📷 材料の写真でリョボットに任せる"}
               <input
                 type="file"
                 accept="image/*"
-                capture="environment"
                 onChange={handleIngredientPhoto}
                 disabled={analyzingIngredients}
                 className="hidden"
