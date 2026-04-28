@@ -27,7 +27,13 @@ export default function NewDishPage() {
   const [photo, setPhoto] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [alsoLog, setAlsoLog] = useState(true);
+  const [logDate, setLogDate] = useState<string>(() => {
+    const d = new Date();
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth() + 1).padStart(2, "0");
+    const dd = String(d.getDate()).padStart(2, "0");
+    return `${yyyy}-${mm}-${dd}`;
+  });
   const [mealType, setMealType] = useState<"breakfast" | "lunch" | "dinner">(
     defaultMealType()
   );
@@ -67,30 +73,44 @@ export default function NewDishPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     const validNames = names.map((n) => n.trim()).filter(Boolean);
-    if (validNames.length === 0) return;
+    if (validNames.length === 0) {
+      alert("料理名を入力してください");
+      return;
+    }
     setSaving(true);
 
-    const res = await fetch("/api/dishes", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: validNames.join("・"), memo, tags, photo }),
-    });
-    const dish = await res.json();
+    try {
+      const res = await fetch("/api/dishes", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: validNames.join("・"), memo, tags, photo }),
+      });
+      if (!res.ok) throw new Error("dish create failed");
+      const dish = await res.json();
 
-    if (alsoLog) {
-      await fetch("/api/daily-logs", {
+      // Combine selected date with current time so the timestamp is sensible
+      const now = new Date();
+      const dateWithTime = new Date(logDate);
+      dateWithTime.setHours(now.getHours(), now.getMinutes(), 0, 0);
+
+      const logRes = await fetch("/api/daily-logs", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          date: new Date().toISOString(),
+          date: dateWithTime.toISOString(),
           dishId: dish.id,
           mealType,
           note: "",
         }),
       });
-    }
+      if (!logRes.ok) throw new Error("log create failed");
 
-    router.push(`/dishes/${dish.id}`);
+      router.push(`/dishes/${dish.id}`);
+    } catch (err) {
+      alert("保存に失敗しました。もう一度お試しください。");
+      console.error(err);
+      setSaving(false);
+    }
   }
 
   return (
@@ -216,14 +236,23 @@ export default function NewDishPage() {
           />
         </div>
 
-        {/* Meal type - always visible */}
+        {/* Date */}
         <div className="card p-4">
           <label className="block text-sm font-semibold text-gray-700 mb-2">
-            いつの食事？{!alsoLog && (
-              <span className="text-xs text-gray-400 font-normal ml-1">
-                （記録に追加する場合）
-              </span>
-            )}
+            食べた日
+          </label>
+          <input
+            type="date"
+            value={logDate}
+            onChange={(e) => setLogDate(e.target.value)}
+            className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-orange-400"
+          />
+        </div>
+
+        {/* Meal type */}
+        <div className="card p-4">
+          <label className="block text-sm font-semibold text-gray-700 mb-2">
+            いつの食事？
           </label>
           <div className="grid grid-cols-3 gap-2">
             {MEAL_TYPES.map((m) => (
@@ -246,22 +275,6 @@ export default function NewDishPage() {
             ※ あとから変更できます
           </p>
         </div>
-
-        {/* Log today */}
-        <label className="flex items-center gap-3 card p-4 cursor-pointer">
-          <input
-            type="checkbox"
-            checked={alsoLog}
-            onChange={(e) => setAlsoLog(e.target.checked)}
-            className="w-4 h-4 accent-orange-500"
-          />
-          <div>
-            <p className="text-sm font-semibold text-gray-700">
-              今日の記録にも追加する
-            </p>
-            <p className="text-xs text-gray-400">ストリークを継続します</p>
-          </div>
-        </label>
 
         <button
           type="submit"
