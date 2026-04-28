@@ -20,7 +20,7 @@ function defaultMealType(): "breakfast" | "lunch" | "dinner" {
 
 export default function NewDishPage() {
   const router = useRouter();
-  const [name, setName] = useState("");
+  const [names, setNames] = useState<string[]>([""]);
   const [memo, setMemo] = useState("");
   const [tags, setTags] = useState<string[]>([]);
   const [photo, setPhoto] = useState<string | null>(null);
@@ -49,15 +49,28 @@ export default function NewDishPage() {
     );
   }
 
+  function updateName(index: number, value: string) {
+    setNames((prev) => prev.map((n, i) => (i === index ? value : n)));
+  }
+
+  function addName() {
+    setNames((prev) => [...prev, ""]);
+  }
+
+  function removeName(index: number) {
+    setNames((prev) => prev.filter((_, i) => i !== index));
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!name.trim()) return;
+    const validNames = names.map((n) => n.trim()).filter(Boolean);
+    if (validNames.length === 0) return;
     setSaving(true);
 
     const res = await fetch("/api/dishes", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: name.trim(), memo, tags, photo }),
+      body: JSON.stringify({ name: validNames.join("・"), memo, tags, photo }),
     });
     const dish = await res.json();
 
@@ -130,15 +143,37 @@ export default function NewDishPage() {
         <div className="card p-4">
           <label className="block text-sm font-semibold text-gray-700 mb-2">
             料理名 <span className="text-orange-500">*</span>
+            <span className="text-xs text-gray-400 font-normal ml-1">（複数追加できます）</span>
           </label>
-          <input
-            type="text"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="例：チキンカレー"
-            required
-            className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-orange-400"
-          />
+          <div className="space-y-2">
+            {names.map((n, i) => (
+              <div key={i} className="flex gap-2 items-center">
+                <input
+                  type="text"
+                  value={n}
+                  onChange={(e) => updateName(i, e.target.value)}
+                  placeholder={i === 0 ? "例：チキンカレー" : "例：みそ汁"}
+                  className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-orange-400"
+                />
+                {names.length > 1 && (
+                  <button
+                    type="button"
+                    onClick={() => removeName(i)}
+                    className="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-red-400 text-lg flex-shrink-0"
+                  >
+                    ✕
+                  </button>
+                )}
+              </div>
+            ))}
+            <button
+              type="button"
+              onClick={addName}
+              className="flex items-center gap-1 text-sm text-orange-500 hover:text-orange-600 mt-1"
+            >
+              <span className="text-lg">＋</span> 料理名を追加
+            </button>
+          </div>
         </div>
 
         {/* Tags */}
@@ -227,7 +262,7 @@ export default function NewDishPage() {
 
         <button
           type="submit"
-          disabled={!name.trim() || saving}
+          disabled={names.every((n) => !n.trim()) || saving}
           className="w-full bg-orange-500 text-white py-3 rounded-xl font-semibold hover:bg-orange-600 transition-colors disabled:opacity-50"
         >
           {saving ? "保存中..." : "記録する"}
