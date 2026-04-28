@@ -1,0 +1,65 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../app/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model Dish {
+  id        String    @id @default(cuid())
+  name      String
+  photo     String?
+  memo      String?
+  tags      String    @default("[]") // JSON array of strings
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  recipe    Recipe?
+  dailyLogs DailyLog[]
+}
+
+model Recipe {
+  id            String   @id @default(cuid())
+  dishId        String   @unique
+  dish          Dish     @relation(fields: [dishId], references: [id], onDelete: Cascade)
+  ingredients   String   @default("[]") // JSON: [{name, amount, unit, cost}]
+  steps         String   @default("") // Markdown text
+  estimatedCost Float    @default(0)
+  calories      Float?
+  protein       Float?
+  fat           Float?
+  carbs         Float?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model DailyLog {
+  id        String   @id @default(cuid())
+  date      DateTime
+  dishId    String
+  dish      Dish     @relation(fields: [dishId], references: [id], onDelete: Cascade)
+  mealType  String   @default("dinner") // "breakfast" | "lunch" | "dinner"
+  note      String?
+  createdAt DateTime @default(now())
+}
+
+model EatingOutLog {
+  id        String   @id @default(cuid())
+  date      DateTime
+  mealType  String   @default("dinner") // "breakfast" | "lunch" | "dinner"
+  place     String   // 店名 or 種類
+  cost      Float    @default(0)
+  photo     String?
+  note      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Badge {
+  id          String   @id @default(cuid())
+  type        String   // "streak_7", "streak_30", "nutrition_balance", "cost_saver", etc.
+  awardedAt   DateTime @default(now())
+  metadata    String   @default("{}") // JSON: extra info
+}
