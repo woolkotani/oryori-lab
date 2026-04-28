@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { prisma } from "@/lib/prisma";
 import { parseJsonField, formatCurrency } from "@/lib/utils";
 import type { Ingredient } from "@/lib/types";

@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { prisma } from "@/lib/prisma";
 import { toDateString } from "@/lib/utils";
 import NutritionWeekChart from "./NutritionWeekChart";
