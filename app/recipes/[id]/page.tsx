@@ -4,6 +4,7 @@ import { use, useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import type { Ingredient } from "@/lib/types";
 import { formatCurrency } from "@/lib/utils";
+import { uploadPhoto } from "@/lib/upload";
 
 const UNITS = ["g", "ml", "個", "枚", "本", "カップ", "大さじ", "小さじ", "適量"];
 
@@ -41,17 +42,14 @@ export default function RecipePage({
     setAnalysisNote(null);
     try {
       // Upload first
-      const fd = new FormData();
-      fd.append("file", file);
-      const upRes = await fetch("/api/upload", { method: "POST", body: fd });
-      const upData = await upRes.json();
-      setIngredientPhoto(upData.url);
+      const photoUrl = await uploadPhoto(file);
+      setIngredientPhoto(photoUrl);
 
       // Analyze
       const aRes = await fetch("/api/ai/analyze-ingredients", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ imageUrl: upData.url }),
+        body: JSON.stringify({ imageUrl: photoUrl }),
       });
       const aData = await aRes.json();
       const detected: Ingredient[] = aData.ingredients ?? [];

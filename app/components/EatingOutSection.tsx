@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { formatCurrency } from "@/lib/utils";
+import { uploadPhoto } from "@/lib/upload";
 
 interface EatingOutLog {
   id: string;
@@ -77,11 +78,10 @@ export default function EatingOutSection() {
     if (!file || !editing) return;
     setUploading(true);
     try {
-      const fd = new FormData();
-      fd.append("file", file);
-      const res = await fetch("/api/upload", { method: "POST", body: fd });
-      const data = await res.json();
-      setEditing({ ...editing, photo: data.url });
+      const url = await uploadPhoto(file);
+      setEditing({ ...editing, photo: url });
+    } catch {
+      alert("写真のアップロードに失敗しました");
     } finally {
       setUploading(false);
       e.target.value = "";

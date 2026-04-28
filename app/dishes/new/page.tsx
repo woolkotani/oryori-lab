@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { uploadPhoto } from "@/lib/upload";
 
 const ALL_TAGS = ["和食", "洋食", "中華", "イタリアン", "デザート", "その他"];
 
@@ -35,12 +36,14 @@ export default function NewDishPage() {
     const file = e.target.files?.[0];
     if (!file) return;
     setUploading(true);
-    const fd = new FormData();
-    fd.append("file", file);
-    const res = await fetch("/api/upload", { method: "POST", body: fd });
-    const data = await res.json();
-    setPhoto(data.url);
-    setUploading(false);
+    try {
+      const url = await uploadPhoto(file);
+      setPhoto(url);
+    } catch {
+      alert("写真のアップロードに失敗しました");
+    } finally {
+      setUploading(false);
+    }
   }
 
   function toggleTag(t: string) {
