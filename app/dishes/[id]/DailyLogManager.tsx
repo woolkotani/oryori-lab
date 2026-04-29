@@ -31,7 +31,16 @@ function formatDate(dateStr: string): string {
 }
 
 function toDateInputValue(dateStr: string): string {
-  return new Date(dateStr).toISOString().split("T")[0];
+  const d = new Date(dateStr);
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const dd = String(d.getDate()).padStart(2, "0");
+  return `${yyyy}-${mm}-${dd}`;
+}
+
+function dateStringToISO(yyyymmdd: string): string {
+  const [y, m, d] = yyyymmdd.split("-").map(Number);
+  return new Date(y, m - 1, d, 12, 0, 0, 0).toISOString();
 }
 
 interface Props {
@@ -59,7 +68,7 @@ export default function DailyLogManager({ dishId, initialLogs }: Props) {
   function startAdd() {
     setAdding(true);
     setEditingId(null);
-    setEditDate(new Date().toISOString().split("T")[0]);
+    setEditDate(toDateInputValue(new Date().toISOString()));
     setEditMeal(defaultMealType());
   }
 
@@ -73,7 +82,7 @@ export default function DailyLogManager({ dishId, initialLogs }: Props) {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        date: new Date(editDate).toISOString(),
+        date: dateStringToISO(editDate),
         mealType: editMeal,
       }),
     });
@@ -92,7 +101,7 @@ export default function DailyLogManager({ dishId, initialLogs }: Props) {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        date: new Date(editDate).toISOString(),
+        date: dateStringToISO(editDate),
         dishId,
         mealType: editMeal,
         note: "",

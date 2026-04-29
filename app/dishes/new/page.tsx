@@ -88,10 +88,9 @@ export default function NewDishPage() {
       if (!res.ok) throw new Error("dish create failed");
       const dish = await res.json();
 
-      // Combine selected date with current time so the timestamp is sensible
-      const now = new Date();
-      const dateWithTime = new Date(logDate);
-      dateWithTime.setHours(now.getHours(), now.getMinutes(), 0, 0);
+      // Use noon local time on the selected date so UTC conversion never shifts the day
+      const [y, m, d] = logDate.split("-").map(Number);
+      const dateWithTime = new Date(y, m - 1, d, 12, 0, 0, 0);
 
       const logRes = await fetch("/api/daily-logs", {
         method: "POST",
